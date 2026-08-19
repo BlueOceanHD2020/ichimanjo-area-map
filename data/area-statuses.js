@@ -29,3 +29,4 @@ window.AREA_STATUSES = {
 };
 
 window.AREA_MANAGEMENT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1tZfA5jLAPCSc-gnoO31lYs5wJj3l2W8K3bZvxZ18alo/edit#gid=2003";
+window.AREA_STATUS_API_URL = "https://script.google.com/macros/s/AKfycbwDgdp1BgQI-yR-FVXrzGvNAmIpzmcDfBy-n6JrrjLCfUnF0pROS20hu1xaIEK3JgQlig/exec";

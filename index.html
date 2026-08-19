@@ -7,7 +7,7 @@
   <title>一万城区域マップ</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./styles.css?v=5">
+  <link rel="stylesheet" href="./styles.css?v=6">
 </head>
 <body>
   <main>
@@ -30,12 +30,13 @@
         <span><i style="--status-color:#f08a24"></i>M175 貸出中</span>
         <span><i style="--status-color:#d93025"></i>M178 4か月超</span>
       </div>
+      <button type="button" id="sync-areas" class="sync-button"><span>↻ 最新情報に更新</span><small id="sync-status">シート連携</small></button>
     </section>
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="./data/apartments.js?v=3"></script>
   <script src="./data/restricted-homes.js?v=3"></script>
-  <script src="./data/area-statuses.js?v=5"></script>
-  <script src="./app.js?v=5"></script>
+  <script src="./data/area-statuses.js?v=6"></script>
+  <script src="./app.js?v=6"></script>
 </body>
 </html>

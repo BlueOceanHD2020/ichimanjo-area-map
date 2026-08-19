@@ -2,6 +2,8 @@ const map = L.map("map", { zoomControl: true, attributionControl: true }).setVie
 const areasLayer = L.featureGroup().addTo(map);
 const apartmentsLayer = L.layerGroup().addTo(map);
 const restrictedHomesLayer = L.layerGroup().addTo(map);
+const areaPolygons = new Map();
+const managementColors = { "赤": "#d93025", "オレンジ": "#f08a24", "黄": "#e3b600", "緑": "#2f8f4e", "紫": "#7b4bb7", "グレー": "#707b76" };
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
@@ -19,6 +21,15 @@ function kmlColor(value, fallback) {
   const a = parseInt(value.slice(0, 2), 16) / 255;
   const b = value.slice(2, 4), g = value.slice(4, 6), r = value.slice(6, 8);
   return { color: `#${r}${g}${b}`, opacity: a };
+}
+
+function applyManagementStyle(polygon, name, areaId, management) {
+  const color = managementColors[management.displayColor] || management.color || "#707b76";
+  polygon.setStyle({ color, weight: 4, opacity: 1, fillColor: color, fillOpacity: .62 });
+  polygon.unbindTooltip().bindTooltip(`${name}｜${management.displayColor}`, { sticky: true, direction: "top" });
+  const sheetRow = management.sheetRow || window.AREA_STATUSES?.[areaId]?.sheetRow;
+  const sheetUrl = `${window.AREA_MANAGEMENT_SHEET_URL}&range=A${sheetRow}:L${sheetRow}`;
+  polygon.unbindPopup().bindPopup(`<article class="area-status-card"><div class="status-swatch" style="--status-color:${color}">${management.displayColor}</div><div class="card-id">Googleスプレッドシート連携</div><h2 class="card-title">${name}</h2><dl class="card-grid"><dt>保管区分</dt><dd>${management.storageType}</dd><dt>貸出状態</dt><dd>${management.loanStatus}</dd><dt>進捗</dt><dd>${management.progress}</dd><dt>経過判定</dt><dd>${management.elapsed}</dd></dl><a class="sheet-button area-sheet-button" href="${sheetUrl}" target="_blank" rel="noopener noreferrer">区域管理表を開く ↗</a></article>`, { maxWidth: 310 });
 }
 
 async function loadAreas() {
@@ -48,13 +59,43 @@ async function loadAreas() {
     const polygonStyle = management ? { color: management.color, weight: 4, opacity: 1, fillColor: management.color, fillOpacity: .62 } : originalStyle;
     const polygon = L.polygon(rings, polygonStyle).addTo(areasLayer);
     polygon.bindTooltip(management ? `${name}｜${management.displayColor}` : name, { sticky: true, direction: "top" });
-    if (management) {
-      const sheetUrl = `${window.AREA_MANAGEMENT_SHEET_URL}&range=A${management.sheetRow}:L${management.sheetRow}`;
-      polygon.bindPopup(`<article class="area-status-card"><div class="status-swatch" style="--status-color:${management.color}">${management.displayColor}</div><div class="card-id">スプレッドシート連携テスト</div><h2 class="card-title">${name}</h2><dl class="card-grid"><dt>保管区分</dt><dd>${management.storageType}</dd><dt>貸出状態</dt><dd>${management.loanStatus}</dd><dt>進捗</dt><dd>${management.progress}</dd><dt>経過判定</dt><dd>${management.elapsed}</dd></dl><a class="sheet-button area-sheet-button" href="${sheetUrl}" target="_blank" rel="noopener noreferrer">区域管理表を開く ↗</a></article>`, { maxWidth: 310 });
-    }
+    if (areaId) areaPolygons.set(areaId, { polygon, name });
+    if (management) applyManagementStyle(polygon, name, areaId, management);
     L.marker(polygon.getBounds().getCenter(), { interactive: false, icon: L.divIcon({ className: "area-label", html: name, iconSize: [90, 18], iconAnchor: [45, 9] }) }).addTo(areasLayer);
   });
   if (areasLayer.getLayers().length) map.fitBounds(areasLayer.getBounds(), { paddingTopLeft: [20, 95], paddingBottomRight: [20, 130] });
+}
+
+function refreshAreaStatuses() {
+  const button = document.getElementById("sync-areas");
+  const status = document.getElementById("sync-status");
+  button.classList.add("loading-state");
+  status.textContent = "更新中…";
+
+  return new Promise((resolve, reject) => {
+    const callback = `areaStatusCallback_${Date.now()}`;
+    const script = document.createElement("script");
+    const timeout = setTimeout(() => finish(new Error("timeout")), 15000);
+    function finish(error, payload) {
+      clearTimeout(timeout);
+      delete window[callback];
+      script.remove();
+      error ? reject(error) : resolve(payload);
+    }
+    window[callback] = payload => finish(payload?.ok ? null : new Error("api"), payload);
+    script.onerror = () => finish(new Error("network"));
+    script.src = `${window.AREA_STATUS_API_URL}?callback=${callback}&_=${Date.now()}`;
+    document.head.appendChild(script);
+  }).then(payload => {
+    Object.entries(payload.areas).forEach(([areaId, management]) => {
+      const target = areaPolygons.get(areaId);
+      if (target) applyManagementStyle(target.polygon, target.name, areaId, management);
+    });
+    const time = new Date(payload.updatedAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+    status.textContent = `${time} 更新`;
+  }).catch(() => {
+    status.textContent = "更新失敗・再試行";
+  }).finally(() => button.classList.remove("loading-state"));
 }
 
 function addApartments() {
@@ -94,10 +135,12 @@ document.getElementById("areas-toggle").addEventListener("click", event => {
   event.currentTarget.setAttribute("aria-pressed", String(!visible));
   event.currentTarget.textContent = `区域境界 ${visible ? "OFF" : "ON"}`;
 });
+document.getElementById("sync-areas").addEventListener("click", refreshAreaStatuses);
 
-loadAreas().catch(error => {
+loadAreas().then(refreshAreaStatuses).catch(error => {
   console.error(error);
   document.getElementById("loading").textContent = "区域データの読み込みに失敗しました";
 }).finally(() => document.getElementById("loading").classList.add("hidden"));
 addApartments();
 addRestrictedHomes();
+setInterval(refreshAreaStatuses, 60000);
