@@ -17,10 +17,11 @@
     </header>
     <div id="map" aria-label="一万城区域地図"></div>
     <div id="loading" class="loading" role="status">区域データを読み込んでいます…</div>
-    <div class="legend" aria-label="凡例"><span class="building-dot"></span>マンション</div>
+    <div class="legend" aria-label="凡例"><span><i class="building-dot"></i>マンション</span><span><i class="restricted-dot"></i>訪問しない家</span></div>
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="./data/apartments.js"></script>
+  <script src="./data/restricted-homes.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

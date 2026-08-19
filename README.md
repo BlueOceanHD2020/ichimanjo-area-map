@@ -18,6 +18,8 @@ python3 -m http.server 8080
 - `app.js` — KML解析、区域・マンション描画
 - `data/areas.kml` — My Mapsから取得した区域データ
 - `data/apartments.js` — マンションデータ
+- `data/restricted-homes.js` — 訪問しない家のサンプルデータ
+- `assets/` — 建物確認用画像
 
 ## 公開
 
@@ -26,6 +28,8 @@ python3 -m http.server 8080
 ## データ更新
 
 マンション追加は `data/apartments.js` の配列へ同じ形式のオブジェクトを追加します。区域更新はMy MapsからKMLを再取得し、`data/areas.kml` を差し替えます。KMLのポリゴン名、境界、線色、塗り色、透明度を画面へ反映します。
+
+訪問しない家は `data/restricted-homes.js` に追加し、確認画像を `assets/` に置きます。サンプル画像はAI生成した架空の建物で、実在住所とは関係ありません。
 
 Google Maps APIキーは不要です。背景地図にはLeaflet + OpenStreetMapを使用しています。公開利用時はOpenStreetMapのタイル利用ポリシーに従ってください。
 

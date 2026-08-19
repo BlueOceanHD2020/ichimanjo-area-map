@@ -55,8 +55,17 @@ function addApartments() {
   });
 }
 
+function addRestrictedHomes() {
+  window.RESTRICTED_HOMES.forEach(home => {
+    const icon = L.divIcon({ className: "", html: '<div class="restricted-pin"><span>×</span></div>', iconSize: [44, 44], iconAnchor: [15, 42], popupAnchor: [7, -40] });
+    const popup = `<article class="restricted-card"><div class="sample-image"><img src="${home.imageUrl}" alt="訪問しない家の確認用サンプル画像"><strong>サンプル画像</strong></div><div class="card-id">${home.id}</div><h2 class="card-title">${home.label}</h2><dl class="card-grid"><dt>区域</dt><dd>${home.areaId}</dd><dt>状態</dt><dd class="danger-text">${home.status}</dd></dl><p class="card-note restricted-note">目印：${home.note}</p><div class="do-not-visit">この家は訪問しない</div></article>`;
+    L.marker(home.position, { icon, title: `${home.id}｜${home.label}`, zIndexOffset: 1100 }).addTo(map).bindPopup(popup, { maxWidth: 320 });
+  });
+}
+
 loadAreas().catch(error => {
   console.error(error);
   document.getElementById("loading").textContent = "区域データの読み込みに失敗しました";
 }).finally(() => document.getElementById("loading").classList.add("hidden"));
 addApartments();
+addRestrictedHomes();
