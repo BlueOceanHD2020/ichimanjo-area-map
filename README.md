@@ -33,6 +33,8 @@ python3 -m http.server 8080
 
 Google Maps APIキーは不要です。背景地図にはLeaflet + OpenStreetMapを使用しています。公開利用時はOpenStreetMapのタイル利用ポリシーに従ってください。
 
+画面下部の切替で「すべて」「マンション」「訪問しない家」を絞り込み、区域境界も表示・非表示にできます。
+
 ## LINE内ブラウザ
 
 HTTPSの公開URLを共有してください。Google Sheetsボタンは新しいタブで開きますが、LINE内ブラウザの設定により同一画面または外部ブラウザへ移る場合があります。Googleアカウントの閲覧権限がない利用者はシートを開けません。

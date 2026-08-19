@@ -1,4 +1,7 @@
 const map = L.map("map", { zoomControl: true, attributionControl: true }).setView([31.70, 131.08], 13);
+const areasLayer = L.featureGroup().addTo(map);
+const apartmentsLayer = L.layerGroup().addTo(map);
+const restrictedHomesLayer = L.layerGroup().addTo(map);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
@@ -34,24 +37,23 @@ async function loadAreas() {
     if (styles.has(styleId)) styles.set(mapStyle.id, styles.get(styleId));
   });
 
-  const group = L.featureGroup().addTo(map);
   xml.querySelectorAll("Placemark").forEach(place => {
     const name = text(place, ":scope > name");
     const styleId = text(place, ":scope > styleUrl").replace("#", "");
     const rings = [...place.querySelectorAll("Polygon outerBoundaryIs LinearRing coordinates")].map(node => coordinates(node.textContent));
     if (!rings.length) return;
-    const polygon = L.polygon(rings, styles.get(styleId) || { color: "#315f90", weight: 2, fillColor: "#7aa4ca", fillOpacity: .4 }).addTo(group);
+    const polygon = L.polygon(rings, styles.get(styleId) || { color: "#315f90", weight: 2, fillColor: "#7aa4ca", fillOpacity: .4 }).addTo(areasLayer);
     polygon.bindTooltip(name, { sticky: true, direction: "top" });
-    L.marker(polygon.getBounds().getCenter(), { interactive: false, icon: L.divIcon({ className: "area-label", html: name, iconSize: [90, 18], iconAnchor: [45, 9] }) }).addTo(group);
+    L.marker(polygon.getBounds().getCenter(), { interactive: false, icon: L.divIcon({ className: "area-label", html: name, iconSize: [90, 18], iconAnchor: [45, 9] }) }).addTo(areasLayer);
   });
-  if (group.getLayers().length) map.fitBounds(group.getBounds(), { paddingTopLeft: [20, 95], paddingBottomRight: [20, 20] });
+  if (areasLayer.getLayers().length) map.fitBounds(areasLayer.getBounds(), { paddingTopLeft: [20, 95], paddingBottomRight: [20, 130] });
 }
 
 function addApartments() {
   window.APARTMENTS.forEach(apartment => {
     const icon = L.divIcon({ className: "", html: '<div class="apartment-pin"><span>🏢</span></div>', iconSize: [44, 44], iconAnchor: [15, 42], popupAnchor: [7, -40] });
     const popup = `<article><div class="card-id">${apartment.id}</div><h2 class="card-title">${apartment.name}</h2><dl class="card-grid"><dt>区域</dt><dd>${apartment.areaId}</dd><dt>部屋数</dt><dd>${apartment.roomCount}戸</dd><dt>ステータス</dt><dd>${apartment.status}</dd></dl><p class="card-note">101〜303号室の訪問状況を確認</p><a class="sheet-button" href="${apartment.sheetUrl}" target="_blank" rel="noopener noreferrer">部屋管理を開く ↗</a></article>`;
-    L.marker(apartment.position, { icon, title: `${apartment.id}｜${apartment.name}`, zIndexOffset: 1000 }).addTo(map).bindPopup(popup, { maxWidth: 300 });
+    L.marker(apartment.position, { icon, title: `${apartment.id}｜${apartment.name}`, zIndexOffset: 1000 }).addTo(apartmentsLayer).bindPopup(popup, { maxWidth: 300 });
   });
 }
 
@@ -59,9 +61,31 @@ function addRestrictedHomes() {
   window.RESTRICTED_HOMES.forEach(home => {
     const icon = L.divIcon({ className: "", html: '<div class="restricted-pin"><span>×</span></div>', iconSize: [44, 44], iconAnchor: [15, 42], popupAnchor: [7, -40] });
     const popup = `<article class="restricted-card"><div class="sample-image"><img src="${home.imageUrl}" alt="訪問しない家の確認用サンプル画像"><strong>サンプル画像</strong></div><div class="card-id">${home.id}</div><h2 class="card-title">${home.label}</h2><dl class="card-grid"><dt>区域</dt><dd>${home.areaId}</dd><dt>状態</dt><dd class="danger-text">${home.status}</dd></dl><p class="card-note restricted-note">目印：${home.note}</p><div class="do-not-visit">この家は訪問しない</div></article>`;
-    L.marker(home.position, { icon, title: `${home.id}｜${home.label}`, zIndexOffset: 1100 }).addTo(map).bindPopup(popup, { maxWidth: 320 });
+    L.marker(home.position, { icon, title: `${home.id}｜${home.label}`, zIndexOffset: 1100 }).addTo(restrictedHomesLayer).bindPopup(popup, { maxWidth: 320 });
   });
 }
+
+function setPinFilter(filter) {
+  map.closePopup();
+  map.removeLayer(apartmentsLayer);
+  map.removeLayer(restrictedHomesLayer);
+  if (filter === "all" || filter === "apartments") apartmentsLayer.addTo(map);
+  if (filter === "all" || filter === "restricted") restrictedHomesLayer.addTo(map);
+  document.querySelectorAll(".filter-button").forEach(button => {
+    const selected = button.dataset.filter === filter;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+}
+
+document.querySelectorAll(".filter-button").forEach(button => button.addEventListener("click", () => setPinFilter(button.dataset.filter)));
+document.getElementById("areas-toggle").addEventListener("click", event => {
+  const visible = map.hasLayer(areasLayer);
+  if (visible) map.removeLayer(areasLayer); else areasLayer.addTo(map);
+  event.currentTarget.classList.toggle("active", !visible);
+  event.currentTarget.setAttribute("aria-pressed", String(!visible));
+  event.currentTarget.textContent = `区域境界 ${visible ? "OFF" : "ON"}`;
+});
 
 loadAreas().catch(error => {
   console.error(error);
