@@ -19,6 +19,7 @@ python3 -m http.server 8080
 - `data/areas.kml` — My Mapsから取得した区域データ
 - `data/apartments.js` — マンションデータ
 - `data/restricted-homes.js` — 訪問しない家のサンプルデータ
+- `data/area-statuses.js` — 区域管理シートから反映する状態スナップショット
 - `assets/` — 建物確認用画像
 
 ## 公開

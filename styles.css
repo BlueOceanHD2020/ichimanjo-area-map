@@ -31,6 +31,11 @@ h1 { margin: 2px 0 0; font-size: 18px; line-height: 1.2; }
 .filter-button.active { border-color: #167c58; color: white; background: #167c58; box-shadow: 0 2px 0 #0d5b3f; }
 .areas-toggle { width: 100%; min-height: 32px; margin-top: 6px; padding: 4px; color: #596762; font-size: 11px; }
 .areas-toggle.active { color: #21624c; background: #e8f4ee; border-color: #b8d8cc; }
+.status-legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 7px; }
+.status-legend span { display: flex; align-items: center; justify-content: center; min-width: 0; color: #596762; font-size: 9px; font-weight: 800; white-space: nowrap; }
+.status-legend i { width: 9px; height: 9px; margin-right: 4px; border-radius: 3px; background: var(--status-color); }
+.status-swatch { display: inline-flex; margin-bottom: 8px; padding: 5px 9px; border-radius: 99px; color: white; background: var(--status-color); font-size: 12px; font-weight: 900; }
+.area-sheet-button { margin-top: 14px; }
 .building-dot, .restricted-dot { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: #e84d3d; }
 .restricted-dot { background: #202733; }
 .restricted-pin { width: 44px; height: 44px; border: 4px solid white; border-radius: 50% 50% 50% 8px; display: grid; place-items: center; transform: rotate(-45deg); background: #202733; box-shadow: 0 5px 12px rgba(20,24,30,.38); }

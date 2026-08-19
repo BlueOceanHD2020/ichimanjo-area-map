@@ -39,11 +39,19 @@ async function loadAreas() {
 
   xml.querySelectorAll("Placemark").forEach(place => {
     const name = text(place, ":scope > name");
+    const areaId = name.match(/^M\d{3}/)?.[0];
+    const management = window.AREA_STATUSES?.[areaId];
     const styleId = text(place, ":scope > styleUrl").replace("#", "");
     const rings = [...place.querySelectorAll("Polygon outerBoundaryIs LinearRing coordinates")].map(node => coordinates(node.textContent));
     if (!rings.length) return;
-    const polygon = L.polygon(rings, styles.get(styleId) || { color: "#315f90", weight: 2, fillColor: "#7aa4ca", fillOpacity: .4 }).addTo(areasLayer);
-    polygon.bindTooltip(name, { sticky: true, direction: "top" });
+    const originalStyle = styles.get(styleId) || { color: "#315f90", weight: 2, fillColor: "#7aa4ca", fillOpacity: .4 };
+    const polygonStyle = management ? { color: management.color, weight: 4, opacity: 1, fillColor: management.color, fillOpacity: .62 } : originalStyle;
+    const polygon = L.polygon(rings, polygonStyle).addTo(areasLayer);
+    polygon.bindTooltip(management ? `${name}｜${management.displayColor}` : name, { sticky: true, direction: "top" });
+    if (management) {
+      const sheetUrl = `${window.AREA_MANAGEMENT_SHEET_URL}&range=A${management.sheetRow}:L${management.sheetRow}`;
+      polygon.bindPopup(`<article class="area-status-card"><div class="status-swatch" style="--status-color:${management.color}">${management.displayColor}</div><div class="card-id">スプレッドシート連携テスト</div><h2 class="card-title">${name}</h2><dl class="card-grid"><dt>保管区分</dt><dd>${management.storageType}</dd><dt>貸出状態</dt><dd>${management.loanStatus}</dd><dt>進捗</dt><dd>${management.progress}</dd><dt>経過判定</dt><dd>${management.elapsed}</dd></dl><a class="sheet-button area-sheet-button" href="${sheetUrl}" target="_blank" rel="noopener noreferrer">区域管理表を開く ↗</a></article>`, { maxWidth: 310 });
+    }
     L.marker(polygon.getBounds().getCenter(), { interactive: false, icon: L.divIcon({ className: "area-label", html: name, iconSize: [90, 18], iconAnchor: [45, 9] }) }).addTo(areasLayer);
   });
   if (areasLayer.getLayers().length) map.fitBounds(areasLayer.getBounds(), { paddingTopLeft: [20, 95], paddingBottomRight: [20, 130] });
